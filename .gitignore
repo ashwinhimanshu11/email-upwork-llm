@@ -1,0 +1,7 @@
+.venv/
+executive-mail-frontend/node_modules/
+processed_emails/
+staged_emails/
+credentials.json
+token_new.json
+token.json

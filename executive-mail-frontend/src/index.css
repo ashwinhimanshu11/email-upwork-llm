@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased;
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    /* Prevent rubber-banding on Mac */
+    overflow: hidden; 
+  }
+}
+
+/* --- Premium Executive UI Components --- */
+
+@layer components {
+  /* Glassmorphism Panel */
+  .vault-panel {
+    @apply bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-2xl;
+  }
+
+  /* Custom "Executive" Input */
+  .vault-input {
+    @apply bg-white/5 border border-white/10 rounded-lg px-4 py-2 
+           focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20
+           transition-all duration-200 placeholder:text-slate-600;
+  }
+}
+
+/* --- Smooth Animations --- */
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* --- Premium Scrollbar --- */
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-white/10 rounded-full;
+  border: 1px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-white/20;
+}
+
+/* --- Typography for AI Responses --- */
+
+.prose {
+  font-size: 0.925rem;
+  line-height: 1.6;
+}
+
+.prose strong {
+  @apply text-blue-400 font-semibold;
+}
+
+.prose code {
+  @apply bg-white/10 px-1.5 py-0.5 rounded font-mono text-xs text-blue-200;
+}

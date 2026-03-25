@@ -1,0 +1,56 @@
+1-Million Email Production Roadmap
+Phase 1: The Automation Glue (Local & Continuous)
+
+Goal: Stop running Python scripts manually. Make the system autonomous for daily, ongoing emails.
+
+    Create master_sync.sh: A simple bash script that runs your pipeline in order.
+
+        python stage_emails.py (Fetches new emails from Gmail API)
+
+        python process_parallel_leads.py (Extracts data to CSV using 4 cores on the i9)
+
+        python ingest_to_postgres.py (Moves CSV data and generates embeddings in the DB)
+
+    Set up a Cron Job: Schedule master_sync.sh to run every night at 2:00 AM.
+
+        Result: When you open Streamlit in the morning, yesterday's emails are already in the vault.
+
+Phase 2: The "Cloud Burst" (Handling the 1 Million Backlog)
+
+Goal: Process the massive historical backlog without melting the local i9 Mac for 60 days.
+
+    Stage Everything Locally: Run stage_emails.py until all 1 million emails are downloaded as .txt files on your Mac.
+
+    Rent a Cloud GPU (e.g., RunPod, Lambda Labs): Spin up a temporary Ubuntu machine with an RTX 4090 or A6000 GPU (costs ~$0.50 to $0.80 per hour).
+
+    Transfer & Process:
+
+        Zip the staged_emails folder and upload it to the Cloud GPU.
+
+        Run your exact process_parallel_leads.py script on the GPU using Llama 3.1:8b.
+
+        Speed increase: A GPU will process these in a few days instead of months.
+
+    Bring Data Home: Download the final, massive client_report_final.csv back to your local i9 Mac and delete the cloud server.
+
+Phase 3: Database Scaling (Postgres Optimization)
+
+Goal: Ensure the Streamlit app queries 1 million rows instantly.
+
+    Mass Ingestion: Run ingest_to_postgres.py on the massive CSV. (Your Mac's CPU will generate the all-MiniLM-L6-v2 embeddings for the search).
+
+    Build the HNSW Index: Run a strict SQL command to index the vectors.
+
+        SQL needed: CREATE INDEX ON mail_storage USING hnsw (embedding vector_cosine_ops);
+
+        Why: This changes Postgres from scanning every single row sequentially to jumping instantly to the closest matches, dropping search time from 15 seconds down to ~50 milliseconds.
+
+Phase 4: Executive UI Polish (Streamlit app.py)
+
+Goal: Give the user (you/your boss) granular control over the search.
+
+    Add Date Range Filters: Put a st.date_input in the sidebar.
+
+    Add Sender/Domain Filters: Put a st.text_input in the sidebar to search specific client domains.
+
+    Update the SQL Logic: Modify the WHERE clause in your app.py so that Postgres filters out the wrong dates and senders before it does the vector math.
