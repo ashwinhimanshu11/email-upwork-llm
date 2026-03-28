@@ -3,76 +3,63 @@
 @layer base {
   :root {
     color-scheme: dark;
+    /* Default to Email Blue */
+    --vault-accent: 37, 99, 235; /* blue-600 */
+    --vault-accent-light: 96, 165, 250; /* blue-400 */
+  }
+
+  [data-vault="upwork"] {
+    --vault-accent: 5, 150, 105; /* emerald-600 */
+    --vault-accent-light: 52, 211, 153; /* emerald-400 */
   }
 
   body {
-    @apply bg-slate-950 text-slate-100 antialiased;
+    @apply bg-slate-950 text-slate-100 antialiased transition-colors duration-700;
     margin: 0;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    /* Prevent rubber-banding on Mac */
     overflow: hidden; 
   }
 }
 
-/* --- Premium Executive UI Components --- */
-
 @layer components {
-  /* Glassmorphism Panel */
   .vault-panel {
-    @apply bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-2xl;
+    @apply bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-2xl transition-all duration-500;
   }
 
-  /* Custom "Executive" Input */
+  /* Dynamic Accent Classes */
+  .bg-vault { background-color: rgb(var(--vault-accent)); }
+  .text-vault { color: rgb(var(--vault-accent-light)); }
+  .border-vault { border-color: rgba(var(--vault-accent), 0.5); }
+  .shadow-vault { shadow-color: rgba(var(--vault-accent), 0.3); }
+
   .vault-input {
     @apply bg-white/5 border border-white/10 rounded-lg px-4 py-2 
-           focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20
-           transition-all duration-200 placeholder:text-slate-600;
+           focus:outline-none transition-all duration-500 placeholder:text-slate-600;
+    border-color: rgba(var(--vault-accent), 0.2);
   }
-}
-
-/* --- Smooth Animations --- */
-
-@keyframes pulse-subtle {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.7; }
-}
-
-.animate-pulse-subtle {
-  animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* --- Premium Scrollbar --- */
-
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-white/10 rounded-full;
-  border: 1px solid transparent;
-  background-clip: content-box;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-white/20;
-}
-
-/* --- Typography for AI Responses --- */
-
-.prose {
-  font-size: 0.925rem;
-  line-height: 1.6;
+  .vault-input:focus {
+    border-color: rgb(var(--vault-accent-light));
+    box-shadow: 0 0 15px rgba(var(--vault-accent), 0.1);
+  }
 }
 
 .prose strong {
-  @apply text-blue-400 font-semibold;
+  color: rgb(var(--vault-accent-light));
+  @apply font-semibold transition-colors duration-500;
 }
 
-.prose code {
-  @apply bg-white/10 px-1.5 py-0.5 rounded font-mono text-xs text-blue-200;
+/* The Bubble Animation Keyframes */
+@keyframes bubble-burst {
+  0% { transform: scale(0); opacity: 0; }
+  50% { opacity: 0.3; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+.bubble-effect {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--vault-accent), 0.8) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 50;
+  animation: bubble-burst 0.8s ease-out forwards;
 }
