@@ -13,10 +13,8 @@ import datetime
 
 app = FastAPI()
 
-# --- CORS CONFIG ---
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-# --- RESOURCE INITIALIZATION ---
 print("🧠 Loading Embedding Model...")
 embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 
@@ -36,12 +34,9 @@ class ChatRequest(BaseModel):
     top_k: int = 8
     date_range: List[str]
     filter_sender: Optional[str] = None
-    vault: str = "email" # 'email' or 'upwork'
-
-# --- MODULAR SEARCH FUNCTIONS ---
+    vault: str = "email"
 
 def search_email_vault(cur, query_vector, req):
-    """YOUR ORIGINAL PROTECTED EMAIL LOGIC"""
     words = [w.strip('?.,!"') for w in req.prompt.split() if len(w) > 3]
     critical_terms = [w for w in words if w[0].isupper() or w.lower() in ['maithili', 'muzaffarnagar', 'konkani', 'sunil', 'syed', 'uber']]
     sql_query = "SELECT subject, sender, date_sent, body_content FROM mail_storage WHERE 1=1"
@@ -71,7 +66,6 @@ def search_email_vault(cur, query_vector, req):
     return context, sources
 
 def search_talent_vault(cur, query_vector, req):
-    """NEW DEDICATED UPWORK LOGIC"""
     sql_query = "SELECT name, location, hourly_rate, skills::text, upwork_profile_url FROM public.applicants ORDER BY combined_vector <=> %s::vector LIMIT %s"
     cur.execute(sql_query, (query_vector, req.top_k))
     rows = cur.fetchall()
@@ -80,6 +74,17 @@ def search_talent_vault(cur, query_vector, req):
     for i, row in enumerate(rows):
         context += f"\n[Candidate {i+1}] Name: {row[0]} | Loc: {row[1]} | Rate: ${row[2]}/hr\nSkills: {row[3]}\n"
         sources.append({"subject": f"Talent: {row[0]}", "sender": row[1], "date": f"${row[2]}/hr", "snippet": f"Skills: {row[3][:300]}", "url": row[4], "type": "upwork"})
+    return context, sources
+
+def search_vendor_vault(cur, query_vector, req):
+    sql_query = "SELECT freelancer_name, project_name, context_chunk FROM vendor_search_optimized ORDER BY embedding <=> %s::vector LIMIT %s"
+    cur.execute(sql_query, (query_vector, req.top_k))
+    rows = cur.fetchall()
+    context = ""
+    sources = []
+    for i, row in enumerate(rows):
+        context += f"\n[Message {i+1}] Vendor: {row[0]} | Project: {row[1]}\nContent: {row[2]}\n"
+        sources.append({"subject": row[0], "sender": row[1], "date": "Vendor Log", "snippet": f"Message: {row[2][:300]}", "type": "vendor"})
     return context, sources
 
 @app.get("/stats")
@@ -91,8 +96,10 @@ async def get_stats():
         e_count = cur.fetchone()[0]
         cur.execute("SELECT count(*) FROM public.applicants;")
         t_count = cur.fetchone()[0]
-        return {"total_emails": e_count, "total_talent": t_count}
-    except: return {"total_emails": 0, "total_talent": 0}
+        cur.execute("SELECT count(*) FROM vendor_search_optimized;")
+        v_count = cur.fetchone()[0]
+        return {"total_emails": e_count, "total_talent": t_count, "total_vendors": v_count}
+    except: return {"total_emails": 0, "total_talent": 0, "total_vendors": 0}
     finally:
         cur.close()
         conn.close()
@@ -105,15 +112,19 @@ async def chat_endpoint(req: ChatRequest):
         loop = asyncio.get_event_loop()
         query_vector = await loop.run_in_executor(None, lambda: embedding_model.encode(req.prompt).tolist())
         
-        # ROUTING BASED ON EXPLICIT VAULT CHOICE
         if req.vault == "upwork":
             context, sources = search_talent_vault(cur, query_vector, req)
             role, goal = "Expert Recruitment Scout", "Identify vendors for tasks based on skills."
+        elif req.vault == "vendor":
+            context, sources = search_vendor_vault(cur, query_vector, req)
+            role, goal = "Expert Vendor Manager", "Analyze vendor conversations and project commitments."
         else:
             context, sources = search_email_vault(cur, query_vector, req)
             role, goal = "Expert Executive Assistant", "Connect dots across project emails."
 
         history_context = "\n".join([f"{m.role.upper()}: {m.content}" for m in req.history[-6:]])
+        
+        # ADDED CONCISENESS TO PROMPT
         llm_prompt = f"You are a {role}. {goal}\nCONTEXT: {context}\nHISTORY: {history_context}\nQuestion: {req.prompt}\nAnswer:"
 
         async def generate_response():
@@ -132,3 +143,4 @@ async def chat_endpoint(req: ChatRequest):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

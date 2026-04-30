@@ -13,8 +13,14 @@
     --vault-accent-light: 52, 211, 153; /* emerald-400 */
   }
 
+  [data-vault="vendor"] {
+    --vault-accent: 147, 51, 234; /* purple-600 */
+    --vault-accent-light: 192, 132, 252; /* purple-400 */
+  }
+
   body {
-    @apply bg-slate-950 text-slate-100 antialiased transition-colors duration-700;
+    /* Removed transition-colors duration-700 */
+    @apply bg-slate-950 text-slate-100 antialiased;
     margin: 0;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow: hidden; 
@@ -23,7 +29,9 @@
 
 @layer components {
   .vault-panel {
-    @apply bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-2xl transition-all duration-500;
+    /* Removed backdrop-blur-xl and transition-all duration-500 */
+    /* Changed to a solid background for better performance */
+    @apply bg-slate-900 border border-white/10 shadow-2xl;
   }
 
   /* Dynamic Accent Classes */
@@ -33,33 +41,24 @@
   .shadow-vault { shadow-color: rgba(var(--vault-accent), 0.3); }
 
   .vault-input {
+    /* Removed transition-all duration-500 */
     @apply bg-white/5 border border-white/10 rounded-lg px-4 py-2 
-           focus:outline-none transition-all duration-500 placeholder:text-slate-600;
+           focus:outline-none placeholder:text-slate-600;
     border-color: rgba(var(--vault-accent), 0.2);
   }
   .vault-input:focus {
     border-color: rgb(var(--vault-accent-light));
-    box-shadow: 0 0 15px rgba(var(--vault-accent), 0.1);
   }
+
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
 }
 
 .prose strong {
   color: rgb(var(--vault-accent-light));
-  @apply font-semibold transition-colors duration-500;
+  /* Removed transition-colors duration-500 */
+  @apply font-semibold;
 }
 
-/* The Bubble Animation Keyframes */
-@keyframes bubble-burst {
-  0% { transform: scale(0); opacity: 0; }
-  50% { opacity: 0.3; }
-  100% { transform: scale(4); opacity: 0; }
-}
-
-.bubble-effect {
-  position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--vault-accent), 0.8) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 50;
-  animation: bubble-burst 0.8s ease-out forwards;
-}
+/* Removed bubble-burst keyframes and .bubble-effect to eliminate animation overhead */

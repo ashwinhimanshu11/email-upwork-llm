@@ -6,3 +6,6 @@ credentials.json
 token_new.json
 token.json
 recruitment_vectorized.sql
+freelancer_vectors_backup.sql
+messages.sql
+rooms.sql
